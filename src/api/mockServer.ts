@@ -10,11 +10,11 @@ import { Wallet } from '../models/Wallet';
 export const mockServer = {
   currentUserId: 'you',
   users: [
-    { id: 'you', username: 'you', displayName: 'You', avatar: '🧑‍🌾', publicKey: '', createdAt: Date.now() - 100000 } as User,
-    { id: 'ava', username: 'ava', displayName: 'Ava Chen', avatar: '🦊', publicKey: '', createdAt: Date.now() - 90000 } as User,
-    { id: 'noah', username: 'noah', displayName: 'Noah Patel', avatar: '🐼', publicKey: '', createdAt: Date.now() - 80000 } as User,
-    { id: 'luna', username: 'luna', displayName: 'Luna Garcia', avatar: '🐰', publicKey: '', createdAt: Date.now() - 70000 } as User,
-    { id: 'kai', username: 'kai', displayName: 'Kai Rivera', avatar: '🦁', publicKey: '', createdAt: Date.now() - 60000 } as User
+    { id: 'you', username: 'you', displayName: 'You', avatar: '🧑‍🌾', publicKey: '', provider: 'email', provider_user_id: 'you', linked_accounts: ['email'], createdAt: Date.now() - 100000 } as User,
+    { id: 'ava', username: 'ava', displayName: 'Ava Chen', avatar: '🦊', publicKey: '', provider: 'telegram', provider_user_id: 'ava_tg', linked_accounts: ['telegram'], createdAt: Date.now() - 90000 } as User,
+    { id: 'noah', username: 'noah', displayName: 'Noah Patel', avatar: '🐼', publicKey: '', provider: 'google', provider_user_id: 'noah_google', linked_accounts: ['google'], createdAt: Date.now() - 80000 } as User,
+    { id: 'luna', username: 'luna', displayName: 'Luna Garcia', avatar: '🐰', publicKey: '', provider: 'apple', provider_user_id: 'luna_apple', linked_accounts: ['apple'], createdAt: Date.now() - 70000 } as User,
+    { id: 'kai', username: 'kai', displayName: 'Kai Rivera', avatar: '🦁', publicKey: '', provider: 'email', provider_user_id: 'kai', linked_accounts: ['email'], createdAt: Date.now() - 60000 } as User
   ],
   friendships: [
     { id: 'fr-1', requesterId: 'you', receiverId: 'ava', status: 'accepted', createdAt: Date.now() - 1000 * 60 * 60 * 24 },

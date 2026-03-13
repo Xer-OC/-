@@ -11,7 +11,7 @@ import { theme } from '../ui/theme';
 
 type MessagesNav = {
   navigate: (
-    screen: 'Integrations' | 'Conversation' | 'GlobalSearch' | 'UnifiedNotifications',
+    screen: 'Integrations' | 'Conversation' | 'GlobalSearch' | 'UnifiedNotifications' | 'PluginMarketplace',
     params?: { conversationId: string; sourceApp: SourceApp }
   ) => void;
 };
@@ -51,6 +51,9 @@ export function ChatHomeScreen() {
           </Pressable>
           <Pressable onPress={() => navigation.navigate('Integrations')} style={styles.settingsBtn}>
             <Text style={styles.settingsText}>Integrations</Text>
+          </Pressable>
+          <Pressable onPress={() => navigation.navigate('PluginMarketplace')} style={styles.settingsBtn}>
+            <Text style={styles.settingsText}>Plugins</Text>
           </Pressable>
         </View>
       </View>

@@ -8,6 +8,7 @@ import { MessageSummary } from '../../models/MessageSummary';
 import { fetchAllMessages, sendMessageThroughAdapter } from '../../services/messageAggregator';
 import { summarizeConversation } from '../../services/messageSummaryService';
 import { generateReplySuggestions } from '../../services/smartReplyService';
+import { agentAssistantBubble, agentRecommendationCard, processAutomationRule } from '../../agents/AgentManager';
 import { Input } from '../../ui/components/Input';
 import { theme } from '../../ui/theme';
 
@@ -49,6 +50,8 @@ export function ConversationScreen() {
     return generateReplySuggestions(latest);
   }, [messages]);
 
+  const agentCard = useMemo(() => agentRecommendationCard(), []);
+
   const sendReply = async (textOverride?: string) => {
     const text = (textOverride ?? composer).trim();
     if (!text) return;
@@ -66,7 +69,22 @@ export function ConversationScreen() {
       externalMessageId: link.externalMessageId
     };
 
-    setMessages((prev) => [newMessage, ...prev]);
+    const automationNote = processAutomationRule(newMessage);
+    if (automationNote) {
+      const assistantMessage: AggregatedMessage = {
+        id: `assistant-${Date.now()}`,
+        conversationId: conversationId ?? 'unknown-conversation',
+        senderName: 'Sprout Assistant',
+        senderAvatar: '🤖',
+        content: `${automationNote} ${agentAssistantBubble(newMessage)}`,
+        timestamp: Date.now() + 1,
+        sourceApp: 'notification',
+        externalMessageId: `assistant-${Date.now()}`
+      };
+      setMessages((prev) => [assistantMessage, newMessage, ...prev]);
+    } else {
+      setMessages((prev) => [newMessage, ...prev]);
+    }
     setComposer('');
   };
 
@@ -86,6 +104,11 @@ export function ConversationScreen() {
         <Text style={styles.summaryBtnText}>View Conversation Summary</Text>
       </Pressable>
       {summary ? <Text style={styles.summaryText}>{summary.summary_text}</Text> : null}
+
+      <View style={styles.agentCard}>
+        <Text style={styles.agentTitle}>{agentCard.title}</Text>
+        <Text style={styles.agentDescription}>{agentCard.description}</Text>
+      </View>
 
       {suggestions.length > 0 ? (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.suggestionRow}>
@@ -139,6 +162,16 @@ const styles = StyleSheet.create({
   suggestionRow: { gap: 8, marginBottom: 8 },
   suggestionChip: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 7, backgroundColor: 'rgba(255,255,255,0.12)' },
   suggestionText: { color: theme.colors.textPrimary, fontSize: 12 },
+  agentCard: {
+    borderRadius: theme.radius.md,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    padding: 10,
+    marginBottom: 8
+  },
+  agentTitle: { color: theme.colors.textPrimary, fontWeight: '700', marginBottom: 4 },
+  agentDescription: { color: theme.colors.textSecondary, fontSize: 12 },
   thread: { flex: 1, gap: theme.spacing.sm, flexDirection: 'column-reverse' },
   me: { backgroundColor: theme.colors.primary, borderRadius: theme.radius.md, padding: theme.spacing.sm + 4, alignSelf: 'flex-end', maxWidth: '85%' },
   meText: { color: theme.colors.textPrimary },

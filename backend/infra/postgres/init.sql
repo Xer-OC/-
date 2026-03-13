@@ -230,3 +230,23 @@ create table if not exists external_threads (
   external_thread_id text not null,
   internal_conversation_id text not null
 );
+
+alter table users add column if not exists provider text not null default 'email';
+alter table users add column if not exists provider_user_id text not null default '';
+alter table users add column if not exists linked_accounts jsonb not null default '[]'::jsonb;
+
+create table if not exists installed_plugins (
+  id uuid primary key default uuid_generate_v4(),
+  user_id uuid not null references users(id) on delete cascade,
+  plugin_id text not null,
+  enabled boolean not null default true,
+  installed_at timestamptz not null default now()
+);
+
+create table if not exists agent_memory (
+  id uuid primary key default uuid_generate_v4(),
+  agent_id text not null,
+  conversation_id text not null,
+  memory_data jsonb not null,
+  updated_at timestamptz not null default now()
+);

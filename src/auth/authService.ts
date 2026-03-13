@@ -17,6 +17,9 @@ export async function login(username: string): Promise<User> {
       displayName: username,
       avatar: '🙂',
       publicKey: keys.publicKey,
+      provider: 'email',
+      provider_user_id: username,
+      linked_accounts: ['email'],
       createdAt: Date.now()
     };
 
