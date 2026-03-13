@@ -2,11 +2,16 @@ import { mockServer } from '../api/mockServer';
 import { Notification } from '../models/Notification';
 import { generateId } from '../utils/id';
 
-export function pushNotification(userId: string, type: Notification['type']): Notification {
+export function pushNotification(
+  userId: string,
+  type: Notification['type'],
+  sourceApp: Notification['sourceApp'] = 'socialfarm'
+): Notification {
   const notification: Notification = {
     id: generateId('notif'),
     userId,
     type,
+    sourceApp,
     read: false,
     createdAt: Date.now()
   };

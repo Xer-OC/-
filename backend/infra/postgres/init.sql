@@ -214,3 +214,19 @@ create table if not exists external_message_links (
   source_app text not null,
   created_at timestamptz not null default now()
 );
+
+create table if not exists message_index (
+  id uuid primary key default uuid_generate_v4(),
+  message_id text not null,
+  content text not null,
+  sender_name text not null,
+  source_app text not null,
+  timestamp timestamptz not null
+);
+
+create table if not exists external_threads (
+  id uuid primary key default uuid_generate_v4(),
+  source_app text not null,
+  external_thread_id text not null,
+  internal_conversation_id text not null
+);

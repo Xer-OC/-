@@ -35,7 +35,11 @@ export const mockServer = {
     { id: 'item-2', name: 'Golden Feed', effect: '+25% growth', rarity: 'epic' },
     { id: 'item-3', name: 'Decoration', effect: '+social happiness', rarity: 'common' }
   ] as Item[],
-  notifications: [] as Notification[],
+  notifications: [
+    { id: 'notif-1', userId: 'you', type: 'message', sourceApp: 'telegram', read: false, createdAt: Date.now() - 1000 * 60 * 4 },
+    { id: 'notif-2', userId: 'you', type: 'room_invite', sourceApp: 'socialfarm', read: false, createdAt: Date.now() - 1000 * 60 * 12 },
+    { id: 'notif-3', userId: 'you', type: 'farm_action', sourceApp: 'discord', read: true, createdAt: Date.now() - 1000 * 60 * 42 }
+  ] as Notification[],
   activities: [] as Activity[],
   reports: [] as Report[]
 };

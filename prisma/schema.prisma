@@ -290,6 +290,7 @@ model Notification {
   userId    String
   type      String
   payload   Json?
+  sourceApp String   @default("socialfarm")
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
 
@@ -326,4 +327,25 @@ model ExternalMessageLink {
   createdAt         DateTime @default(now())
 
   @@map("external_message_links")
+}
+
+
+model MessageIndex {
+  id         String   @id @default(uuid())
+  messageId  String
+  content    String
+  senderName String
+  sourceApp  String
+  timestamp  DateTime
+
+  @@map("message_index")
+}
+
+model ExternalThread {
+  id                     String @id @default(uuid())
+  sourceApp              String
+  externalThreadId       String
+  internalConversationId String
+
+  @@map("external_threads")
 }

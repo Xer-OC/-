@@ -4,6 +4,7 @@ import { MessageSourceAdapter } from '../messageSources/MessageSourceAdapter';
 import { NotificationMirrorAdapter } from '../messageSources/NotificationMirrorAdapter';
 import { SlackAdapter } from '../messageSources/SlackAdapter';
 import { TelegramAdapter } from '../messageSources/TelegramAdapter';
+import { indexMessage } from './messageSearchService';
 
 type ExternalMessageLink = {
   id: string;
@@ -12,8 +13,16 @@ type ExternalMessageLink = {
   sourceApp: SourceApp;
 };
 
+type ExternalThreadLink = {
+  id: string;
+  sourceApp: SourceApp;
+  externalThreadId: string;
+  internalConversationId: string;
+};
+
 const adapters = new Map<SourceApp, MessageSourceAdapter>();
 const externalMessageLinks: ExternalMessageLink[] = [];
+const externalThreadLinks: ExternalThreadLink[] = [];
 
 export type AggregatedConversation = {
   conversationId: string;
@@ -50,7 +59,9 @@ export function sortByTimestamp(messages: AggregatedMessage[]): AggregatedMessag
 export async function fetchAllMessages(): Promise<AggregatedMessage[]> {
   await initializeMessageAggregator();
   const groups = await Promise.all(Array.from(adapters.values()).map((adapter) => adapter.fetchMessages()));
-  return sortByTimestamp(mergeMessages(groups));
+  const merged = sortByTimestamp(mergeMessages(groups));
+  merged.forEach((message) => indexMessage(message));
+  return merged;
 }
 
 export function buildConversationList(messages: AggregatedMessage[]): AggregatedConversation[] {
@@ -90,9 +101,21 @@ export async function sendMessageThroughAdapter(sourceApp: SourceApp, conversati
     sourceApp
   };
   externalMessageLinks.push(link);
+
+  externalThreadLinks.push({
+    id: `thread-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    sourceApp,
+    externalThreadId: `${sourceApp}-${conversationId}`,
+    internalConversationId: conversationId
+  });
+
   return link;
 }
 
 export function getExternalMessageLinks() {
   return externalMessageLinks;
+}
+
+export function getExternalThreadLinks() {
+  return externalThreadLinks;
 }
