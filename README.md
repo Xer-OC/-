@@ -93,3 +93,12 @@ npm run realtime
 
 ## Security Note
 The included E2EE layer is an MVP simplification. Production deployment requires forward secrecy, key rotation, multi-device sync, and strong identity verification.
+
+
+## VS Code Quick Start
+1. Open `socialfarm.code-workspace` in VS Code.
+2. Run the task **Install Dependencies**.
+3. Start the app with the launch profile **Run Expo Web** or the task **Start Expo Web**.
+4. Optional checks:
+   - **Typecheck**
+   - **Lint**
