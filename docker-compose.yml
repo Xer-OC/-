@@ -1,0 +1,114 @@
+version: '3.9'
+
+services:
+  api-gateway:
+    image: nginx:1.27-alpine
+    ports:
+      - '8080:80'
+    volumes:
+      - ./backend/gateway/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - auth-service
+      - social-service
+      - chat-service
+      - room-service
+      - video-service
+      - game-service
+      - economy-service
+      - notification-service
+
+  auth-service:
+    image: node:20-alpine
+    working_dir: /app
+    command: ['sh', '-c', 'node -e "console.log(\"auth-service up\")" && sleep infinity']
+
+  social-service:
+    image: node:20-alpine
+    working_dir: /app
+    command: ['sh', '-c', 'node -e "console.log(\"social-service up\")" && sleep infinity']
+
+  chat-service:
+    image: node:20-alpine
+    working_dir: /app
+    command: ['sh', '-c', 'node -e "console.log(\"chat-service up\")" && sleep infinity']
+
+  room-service:
+    image: node:20-alpine
+    working_dir: /app
+    command: ['sh', '-c', 'node -e "console.log(\"room-service up\")" && sleep infinity']
+
+  video-service:
+    image: node:20-alpine
+    working_dir: /app
+    command: ['sh', '-c', 'node -e "console.log(\"video-service up\")" && sleep infinity']
+
+  game-service:
+    image: node:20-alpine
+    working_dir: /app
+    command: ['sh', '-c', 'node -e "console.log(\"game-service up\")" && sleep infinity']
+
+  economy-service:
+    image: node:20-alpine
+    working_dir: /app
+    command: ['sh', '-c', 'node -e "console.log(\"economy-service up\")" && sleep infinity']
+
+  notification-service:
+    image: node:20-alpine
+    working_dir: /app
+    command: ['sh', '-c', 'node -e "console.log(\"notification-service up\")" && sleep infinity']
+
+  websocket-gateway:
+    image: node:20-alpine
+    working_dir: /app
+    command: ['sh', '-c', 'node -e "console.log(\"websocket-gateway up\")" && sleep infinity']
+    depends_on:
+      - redis
+      - kafka
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: socialfarm
+      POSTGRES_PASSWORD: socialfarm
+      POSTGRES_DB: socialfarm
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./backend/infra/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - '6379:6379'
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.0
+    depends_on:
+      - zookeeper
+    ports:
+      - '9092:9092'
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  minio:
+    image: minio/minio:RELEASE.2024-07-16T23-46-41Z
+    command: server /data --console-address ':9001'
+    environment:
+      MINIO_ROOT_USER: socialfarm
+      MINIO_ROOT_PASSWORD: socialfarm123
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+
+volumes:
+  pgdata:

@@ -1,0 +1,377 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String          @id @default(uuid())
+  username    String          @unique
+  displayName String
+  avatarUrl   String?
+  bio         String?
+  publicKey   String
+  provider    String          @default("email")
+  providerUserId String       @default("")
+  linkedAccounts Json         @default("[]")
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  authAccounts AuthAccount[]
+  devices      Device[]
+
+  requestedFriendships Friendship[] @relation("FriendRequester")
+  receivedFriendships  Friendship[] @relation("FriendReceiver")
+
+  blocksInitiated Block[] @relation("Blocker")
+  blocksReceived  Block[] @relation("Blocked")
+
+  presence Presence?
+
+  memberships ConversationMember[]
+  messages    Message[]
+  receipts    MessageReceipt[]
+
+  ownedRooms   Room[]       @relation("RoomOwner")
+  roomMembers  RoomMember[]
+
+  farmMembers  FarmMember[]
+  farmActions  FarmAction[]
+
+  wallet       Wallet?
+  transactions Transaction[]
+  userItems    UserItem[]
+
+  notifications Notification[]
+  activities    Activity[]
+
+  reportsFiled    Report[] @relation("Reporter")
+  reportsReceived Report[] @relation("ReportedUser")
+}
+
+model AuthAccount {
+  id           String   @id @default(uuid())
+  userId       String
+  provider     String
+  providerUid  String
+  passwordHash String?
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerUid])
+}
+
+model Device {
+  id         String   @id @default(uuid())
+  userId     String
+  deviceId   String   @unique
+  deviceType String
+  pushToken  String?
+  lastActive DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Friendship {
+  id          String   @id @default(uuid())
+  requesterId String
+  receiverId  String
+  status      String
+  createdAt   DateTime @default(now())
+
+  requester User @relation("FriendRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  receiver  User @relation("FriendReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@unique([requesterId, receiverId])
+}
+
+model Block {
+  userId        String
+  blockedUserId String
+  createdAt     DateTime @default(now())
+
+  user        User @relation("Blocker", fields: [userId], references: [id], onDelete: Cascade)
+  blockedUser User @relation("Blocked", fields: [blockedUserId], references: [id], onDelete: Cascade)
+
+  @@id([userId, blockedUserId])
+}
+
+model Presence {
+  userId     String   @id
+  status     String
+  lastActive DateTime @default(now())
+  deviceId   String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Conversation {
+  id        String   @id @default(uuid())
+  type      String
+  createdAt DateTime @default(now())
+
+  members  ConversationMember[]
+  messages Message[]
+}
+
+model ConversationMember {
+  conversationId String
+  userId         String
+  role           String
+  joinedAt       DateTime @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([conversationId, userId])
+}
+
+model Message {
+  id               String   @id @default(uuid())
+  conversationId   String
+  senderId         String
+  encryptedContent String
+  messageType      String
+  createdAt        DateTime @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  receipts     MessageReceipt[]
+}
+
+model MessageReceipt {
+  messageId String
+  userId    String
+  status    String
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([messageId, userId])
+}
+
+model Room {
+  id        String   @id @default(uuid())
+  name      String
+  ownerId   String
+  topic     String?
+  createdAt DateTime @default(now())
+
+  owner   User @relation("RoomOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  members RoomMember[]
+  videoSessions RoomVideoSession[]
+}
+
+model RoomMember {
+  roomId    String
+  userId    String
+  role      String
+  joinedAt  DateTime @default(now())
+
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([roomId, userId])
+}
+
+model RoomVideoSession {
+  id          String   @id @default(uuid())
+  roomId       String
+  videoSource  String
+  videoUrl     String
+  startedAt    DateTime @default(now())
+
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+}
+
+model Video {
+  id         String   @id @default(uuid())
+  source     String
+  externalId String
+  title      String
+  thumbnail  String?
+  url        String
+  duration   Int
+  createdAt  DateTime @default(now())
+
+  views VideoView[]
+
+  @@unique([source, externalId])
+}
+
+model VideoView {
+  userId    String
+  videoId   String
+  watchTime Int
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  video Video @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  @@id([userId, videoId, createdAt])
+}
+
+model Farm {
+  id        String   @id @default(uuid())
+  name      String
+  level     Int      @default(1)
+  growth    Float    @default(0)
+  createdAt DateTime @default(now())
+
+  members FarmMember[]
+  actions FarmAction[]
+}
+
+model FarmMember {
+  farmId    String
+  userId    String
+  role      String
+  joinedAt  DateTime @default(now())
+
+  farm Farm @relation(fields: [farmId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([farmId, userId])
+}
+
+model FarmAction {
+  id         String   @id @default(uuid())
+  farmId      String
+  userId      String
+  actionType  String
+  createdAt   DateTime @default(now())
+
+  farm Farm @relation(fields: [farmId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Wallet {
+  userId    String   @id
+  coins     Int      @default(0)
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Transaction {
+  id          String   @id @default(uuid())
+  userId      String
+  amount      Int
+  type        String
+  referenceId String?
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Item {
+  id     String @id @default(uuid())
+  name   String
+  effect String
+  rarity String
+
+  userItems UserItem[]
+}
+
+model UserItem {
+  userId   String
+  itemId   String
+  quantity Int @default(0)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  item Item @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@id([userId, itemId])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  type      String
+  payload   Json?
+  sourceApp String   @default("socialfarm")
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Activity {
+  id        String   @id @default(uuid())
+  userId    String
+  type      String
+  payload   Json?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Report {
+  id           String   @id @default(uuid())
+  reporterId   String
+  targetUserId String
+  reason       String
+  createdAt    DateTime @default(now())
+
+  reporter   User @relation("Reporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  targetUser User @relation("ReportedUser", fields: [targetUserId], references: [id], onDelete: Cascade)
+}
+
+
+model ExternalMessageLink {
+  id                String   @id @default(uuid())
+  internalMessageId String
+  externalMessageId String
+  sourceApp         String
+  createdAt         DateTime @default(now())
+
+  @@map("external_message_links")
+}
+
+
+model MessageIndex {
+  id         String   @id @default(uuid())
+  messageId  String
+  content    String
+  senderName String
+  sourceApp  String
+  timestamp  DateTime
+
+  @@map("message_index")
+}
+
+model ExternalThread {
+  id                     String @id @default(uuid())
+  sourceApp              String
+  externalThreadId       String
+  internalConversationId String
+
+  @@map("external_threads")
+}
+
+
+model InstalledPlugin {
+  id          String   @id @default(uuid())
+  userId      String
+  pluginId    String
+  enabled     Boolean  @default(true)
+  installedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("installed_plugins")
+}
+
+model AgentMemory {
+  id             String   @id @default(uuid())
+  agentId        String
+  conversationId String
+  memoryData     Json
+  updatedAt      DateTime @updatedAt
+
+  @@map("agent_memory")
+}

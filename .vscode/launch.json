@@ -1,0 +1,19 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Run Expo Web",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm run web",
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "Run Realtime Service",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm run realtime",
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}

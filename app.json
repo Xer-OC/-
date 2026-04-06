@@ -1,0 +1,18 @@
+{
+  "expo": {
+    "name": "SocialFarm",
+    "slug": "socialfarm-mobile-mvp",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.socialfarm.mobile"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#F6F8FF"
+      }
+    }
+  }
+}

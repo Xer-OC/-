@@ -1,0 +1,127 @@
+import { useNavigation } from '@react-navigation/native';
+import { useEffect, useState } from 'react';
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { SourceBadge } from '../components/SourceBadge';
+import { SourceApp } from '../models/AggregatedMessage';
+import { AggregatedConversation, buildConversationList, fetchAllMessages } from '../services/messageAggregator';
+import { summarizeDailyMessages } from '../services/messageSummaryService';
+import { Badge } from '../ui/components/Badge';
+import { Card } from '../ui/components/Card';
+import { theme } from '../ui/theme';
+
+type MessagesNav = {
+  navigate: (
+    screen: 'Integrations' | 'Conversation' | 'GlobalSearch' | 'UnifiedNotifications' | 'PluginMarketplace',
+    params?: { conversationId: string; sourceApp: SourceApp }
+  ) => void;
+};
+
+function formatRelative(ts: number) {
+  const diffMs = Date.now() - ts;
+  const diffMin = Math.max(1, Math.floor(diffMs / 60000));
+  if (diffMin < 60) return `${diffMin}m`;
+  const hours = Math.floor(diffMin / 60);
+  if (hours < 24) return `${hours}h`;
+  return `${Math.floor(hours / 24)}d`;
+}
+
+export function ChatHomeScreen() {
+  const navigation = useNavigation<MessagesNav>();
+  const [conversations, setConversations] = useState<AggregatedConversation[]>([]);
+  const [dailyDigest, setDailyDigest] = useState('Generating daily digest...');
+
+  useEffect(() => {
+    async function load() {
+      const messages = await fetchAllMessages();
+      setConversations(buildConversationList(messages));
+      const digest = await summarizeDailyMessages('you');
+      setDailyDigest(digest.summary_text);
+    }
+
+    void load();
+  }, []);
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.headerRow}>
+        <Text style={styles.title}>Messages</Text>
+        <View style={styles.actionsRow}>
+          <Pressable onPress={() => navigation.navigate('GlobalSearch')} style={styles.settingsBtn}>
+            <Text style={styles.settingsText}>Search</Text>
+          </Pressable>
+          <Pressable onPress={() => navigation.navigate('Integrations')} style={styles.settingsBtn}>
+            <Text style={styles.settingsText}>Integrations</Text>
+          </Pressable>
+          <Pressable onPress={() => navigation.navigate('PluginMarketplace')} style={styles.settingsBtn}>
+            <Text style={styles.settingsText}>Plugins</Text>
+          </Pressable>
+        </View>
+      </View>
+
+      <Card style={styles.digestCard}>
+        <Text style={styles.digestTitle}>Daily Message Digest</Text>
+        <Text style={styles.digestText}>{dailyDigest}</Text>
+      </Card>
+
+      <Pressable onPress={() => navigation.navigate('UnifiedNotifications')} style={styles.unifiedBtn}>
+        <Text style={styles.unifiedText}>Open Unified Notification Center</Text>
+      </Pressable>
+
+      <FlatList
+        data={conversations}
+        keyExtractor={(item) => item.conversationId}
+        contentContainerStyle={{ gap: theme.spacing.sm }}
+        renderItem={({ item }) => (
+          <Pressable onPress={() => navigation.navigate('Conversation', { conversationId: item.conversationId, sourceApp: item.sourceApp })}>
+            <Card>
+              <View style={styles.row}>
+                <Text style={styles.avatar}>{item.senderAvatar}</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.name}>{item.senderName}</Text>
+                  <Text style={styles.preview}>{item.preview}</Text>
+                  <SourceBadge sourceApp={item.sourceApp} />
+                </View>
+                <View style={{ alignItems: 'flex-end', gap: 4 }}>
+                  <Text style={styles.time}>{formatRelative(item.timestamp)}</Text>
+                  <Badge text={1} />
+                </View>
+              </View>
+            </Card>
+          </Pressable>
+        )}
+      />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: theme.colors.background, padding: theme.spacing.md },
+  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: theme.spacing.sm },
+  actionsRow: { flexDirection: 'row', gap: 8 },
+  title: { ...theme.typography.titleLarge, color: theme.colors.textPrimary },
+  settingsBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,0.12)'
+  },
+  settingsText: { color: theme.colors.textPrimary, fontWeight: '600' },
+  digestCard: { marginBottom: 10 },
+  digestTitle: { color: theme.colors.textPrimary, fontWeight: '700', marginBottom: 4 },
+  digestText: { color: theme.colors.textSecondary },
+  unifiedBtn: {
+    marginBottom: 10,
+    borderRadius: theme.radius.md,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.surface,
+    paddingVertical: 10,
+    alignItems: 'center'
+  },
+  unifiedText: { color: theme.colors.textPrimary, fontWeight: '600' },
+  row: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm },
+  avatar: { fontSize: 28 },
+  name: { color: theme.colors.textPrimary, fontWeight: '700' },
+  preview: { color: theme.colors.textSecondary, marginBottom: 4 },
+  time: { color: theme.colors.textSecondary, fontSize: 12 }
+});
