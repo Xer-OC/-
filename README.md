@@ -102,3 +102,18 @@ The included E2EE layer is an MVP simplification. Production deployment requires
 4. Optional checks:
    - **Typecheck**
    - **Lint**
+
+
+## 打包 Windows EXE（可直接运行）
+本项目包含一个实时通信服务，可以直接打包成 Windows 可执行文件：
+
+```bash
+npm install
+npm run build:realtime-exe
+```
+
+生成文件：
+- `dist/socialfarm-realtime.exe`
+
+在 Windows 上双击即可启动，默认端口是 `4001`。
+如需改端口，可在启动前设置环境变量 `PORT`。
